@@ -6,11 +6,12 @@ import org.apache.jena.vocabulary.VCARD;
 
 public class Vcard{
 
-    private String nom, prenom;
+    private String nom, prenom, fullname;
 
     public Vcard(String nom, String prenom){
         this.nom = nom;
         this.prenom = prenom;
+        fullname = this.prenom+ "" +this.nom;
 
     }
 
@@ -20,6 +21,9 @@ public class Vcard{
 
     public String getprenom(){
         return this.prenom;
+    }
+    public String getfullName(){
+        return this.fullname;
     }
 
 
