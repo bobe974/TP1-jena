@@ -14,12 +14,20 @@ import org.apache.jena.vocabulary.VCARD;
 
 public class Fenetre extends JFrame {
 
+    private JPanel panneau, panneau1, panneau2;
     private JTextField textField;
     private JTextField textField_1;
     private Model model;
     //textarea
-    ArrayList<String> leseleves = new ArrayList<>();
-    private JTextArea jTextArea;
+    private ArrayList<String> leseleves = new ArrayList<>();
+    private JTextArea jTextArea, jTextrdf;
+    private JScrollPane sp, sp2;
+    private JTable jTable;
+    //En-têtes pour JTable
+    String[] columns = new String[] {
+            "Nom","Prénom","URI"};
+    //données pour JTable dans un tableau 2D
+    Object[][] data = new Object[20][20];
     //liste
 //    DefaultListModel<String> lesEleves = new DefaultListModel<>();
 //    private JList<String> jList;
@@ -27,7 +35,7 @@ public class Fenetre extends JFrame {
 
     public static void main(String[] args) {
         Fenetre window = new Fenetre();
-        window.setSize(600,400);
+        window.setSize(1000,600);
         window.setVisible(true);
 
 
@@ -35,10 +43,13 @@ public class Fenetre extends JFrame {
 
     public Fenetre() {
         super("tp1-jena");
+        this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        //centrer la jframe
+        Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+        this.setLocation(dim.width/2 - this.getWidth()/2, dim.height/2 - this.getHeight()/2);
         // créer un modèle vide
         this.model = ModelFactory.createDefaultModel();
         initialize();
-
 
     }
 
@@ -48,19 +59,34 @@ public class Fenetre extends JFrame {
         onglets.setForeground(Color.BLACK);
 
         //panneau principal
-        JPanel panneau = new JPanel();
+         panneau = new JPanel();
         panneau.setLayout(new FlowLayout(FlowLayout.CENTER,20,20));
 
         //panneau pour les onglets
-        JPanel panneau1= new JPanel();
+         panneau1= new JPanel();
         panneau1.setPreferredSize(new Dimension(500,300));
-        JPanel panneau2 = new JPanel();;
+         panneau2 = new JPanel();;
         jTextArea = new JTextArea();
-        jTextArea.setPreferredSize(new Dimension(400,280));
-//        jList = new JList<>(lesEleves);
-        //ajoute la liste dans le panneau 2
-//        panneau2.add(jList);
-        panneau2.add(jTextArea);
+        jTextArea.setPreferredSize(new Dimension(500,400));
+        jTextrdf = new JTextArea();
+        jTextrdf.setPreferredSize(new Dimension(500,400));
+
+        //scroll pane
+        jTable = new JTable(data,columns);
+
+        /*********todo modif jtable***/
+        sp = new JScrollPane(jTable);
+        sp2 = new JScrollPane(jTextrdf);
+        sp.setPreferredSize(new Dimension(500,400));
+        sp2.setPreferredSize(new Dimension(500,400));
+        sp.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        sp2.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        sp.setPreferredSize(new Dimension(400,280));
+        sp2.setPreferredSize(new Dimension(400,280));
+
+
+        panneau2.add(sp);
+        panneau2.add(sp2);
 
 
 
@@ -100,6 +126,7 @@ public class Fenetre extends JFrame {
         //charge les données
         readRdfFile();
         loadRdf();
+//        readRdf();
 
         btnClear.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -115,15 +142,11 @@ public class Fenetre extends JFrame {
                 Vcard vcard = new Vcard(textField.getText(),textField_1.getText());
                 addVcard(vcard, model);
 
-                // utiliser le FileManager pour trouver le fichier d'entrée
-                //String modelname = "xxxaa";
-                //recupere le fichier
                 //TODO parcours de tout les fichier
                 //ajout de tout les fichiers dans le model
                 readRdfFile();
                 loadRdf();
-               //readRdf();
-
+//                readRdf();
             }
         });
 
@@ -140,7 +163,7 @@ public class Fenetre extends JFrame {
         lemodel.createResource("http://universite/personne/"+vcard.getNom()+vcard.getprenom())
                 .addProperty(VCARD.FN, vcard.getfullName())
                 .addProperty(VCARD.N,
-                        model.createResource()
+                        lemodel.createResource()
                                 .addProperty(VCARD.Given,vcard.getprenom())
                                 .addProperty(VCARD.Family, vcard.getNom()));
         saveData(lemodel, vcard.getfullName());
@@ -198,18 +221,28 @@ public class Fenetre extends JFrame {
     public void loadRdf(){
         //afficher toutes les Vcards
         ResIterator iter = model.listResourcesWithProperty(VCARD.FN);
+        ResIterator iter1 = model.listResourcesWithProperty(VCARD.Given);
+        ResIterator iter2 = model.listResourcesWithProperty(VCARD.Family);
         if (iter.hasNext()) {
             System.out.println("The database contains vcards for:");
-
+            int i = 0;
             while (iter.hasNext()) {
 
-                String valeur = iter.nextResource()
+                Resource resource = iter.nextResource();
+                String valeur = resource
                         .getRequiredProperty(VCARD.FN)
                         .getString();
+
+                String uri = resource.getURI();
                 //todo les espaces font crash l'appli
                 //vérifie l'élément n'est pas deja dans la liste
                 if(!leseleves.contains(valeur)){
+                    //alimente le tableau
                     leseleves.add(valeur);
+                    data[i][0] = iter2.nextResource().getRequiredProperty(VCARD.Family).getString();
+                    data[i][1] = iter1.nextResource().getRequiredProperty(VCARD.Given).getString();
+                    data[i][2] = uri;
+                    i++;
                 }
             }
         } else {
@@ -217,14 +250,22 @@ public class Fenetre extends JFrame {
         }
 
         //ajout dans le textarea
-        for( String str : leseleves){
-            jTextArea.append(str+"\n");
-        }
+//        for( String str : leseleves){
+//            jTextArea.append(str+"\n");
+//        }
+
         // affiche le modèle comme RDF/XML
-        model.write(System.out, "RDF/XML-ABBREV");
+        String syntax = "RDF/XML-ABBREV";
+        StringWriter out = new StringWriter();
+        model.write(out, syntax);
+        String result = out.toString();
+        System.out.println(result);
+        jTextrdf.setText(result);
+
     }
 
-    //    public void readRdf(){
+
+//        public void readRdf(){
 //        // liste des déclarations dans le modèle
 //        StmtIterator iter = this.model.listStatements();
 //
@@ -237,14 +278,26 @@ public class Fenetre extends JFrame {
 //
 //            System.out.print(subject.toString());
 //            System.out.print(" " + predicate.toString() + " ");
+//            //vérifie l'élément n'est pas deja dans la liste
+//            if(!leseleves.contains(subject.toString())){
+//                leseleves.add(subject.toString());
+//            }
+//            if(!leseleves.contains(predicate.toString())){
+//                leseleves.add(predicate.toString());
+//            }
+//            if(!leseleves.contains(object.toString())){
+//                leseleves.add(object.toString());
+//            }
 //            if (object instanceof Resource) {
 //                System.out.print(object.toString());
 //            } else {
 //                // l'objet est un littéral
 //                System.out.print(" \"" + object.toString() + "\"");
 //            }
-//
-//            System.out.println(" .");
+//            //ajout dans le textarea
+//            for( String str : leseleves){
+//                jTextrdf.append(str+"\n");
+//            }
 //        }
 //    }
 }
