@@ -1,43 +1,39 @@
-
 import javax.swing.*;
-
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.io.*;
 import java.util.ArrayList;
-
+import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.vocabulary.VCARD;
 
-
-
 public class Fenetre extends JFrame {
 
-    private JPanel panneau, panneau1, panneau2;
-    private JTextField textField;
-    private JTextField textField_1;
+    private JPanel panneau, panneau1, panneau2, panneau3;
+    private JTabbedPane onglets;
+    private JTextField textField, textField_1;
+    private JLabel lbPrenom, lblName, lblsparsql;
+    private JButton btnClear, btnSubmit, btnSparql;
     private Model model;
+    private int launch = 0;
     //textarea
-    private ArrayList<String> leseleves = new ArrayList<>();
-    private JTextArea jTextArea, jTextrdf;
+    private ArrayList < String > leseleves = new ArrayList < > ();
+    private JTextArea jTextArea, jTextrdf, jtextsparql, jresultsparql;
     private JScrollPane sp, sp2;
     private JTable jTable;
     //En-têtes pour JTable
-    String[] columns = new String[] {
-            "Nom","Prénom","URI"};
-    //données pour JTable dans un tableau 2D
-    Object[][] data = new Object[20][20];
-    //liste
-//    DefaultListModel<String> lesEleves = new DefaultListModel<>();
-//    private JList<String> jList;
-
+    private String[] columns = new String[] {
+            "Nom",
+            "Prénom",
+            "URI"
+    };
+    private Object[][] data = new Object[20][20];
 
     public static void main(String[] args) {
         Fenetre window = new Fenetre();
-        window.setSize(1000,600);
+        window.setSize(800, 500);
         window.setVisible(true);
-
 
     }
 
@@ -46,7 +42,7 @@ public class Fenetre extends JFrame {
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         //centrer la jframe
         Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
-        this.setLocation(dim.width/2 - this.getWidth()/2, dim.height/2 - this.getHeight()/2);
+        this.setLocation(dim.width / 2 - this.getWidth() / 2, dim.height / 2 - this.getHeight() / 2);
         // créer un modèle vide
         this.model = ModelFactory.createDefaultModel();
         initialize();
@@ -55,34 +51,38 @@ public class Fenetre extends JFrame {
 
     private void initialize() {
 
-        JTabbedPane onglets = new JTabbedPane(SwingConstants.TOP);
+        onglets = new JTabbedPane(SwingConstants.TOP);
         onglets.setForeground(Color.BLACK);
 
         //panneau principal
-         panneau = new JPanel();
-        panneau.setLayout(new FlowLayout(FlowLayout.CENTER,20,20));
+        panneau = new JPanel();
+        panneau.setLayout(new FlowLayout(FlowLayout.CENTER, 20, 20));
 
         //panneau pour les onglets
-         panneau1= new JPanel();
-        panneau1.setPreferredSize(new Dimension(500,300));
-         panneau2 = new JPanel();;
+        panneau1 = new JPanel();
+        panneau1.setPreferredSize(new Dimension(500, 300));
+        panneau2 = new JPanel();
+        panneau3 = new JPanel();
+
         jTextArea = new JTextArea();
-        jTextArea.setPreferredSize(new Dimension(500,400));
+        jTextArea.setPreferredSize(new Dimension(500, 400));
         jTextrdf = new JTextArea();
-        jTextrdf.setPreferredSize(new Dimension(500,400));
+        jTextrdf.setPreferredSize(new Dimension(500, 400));
+
+
 
         //scroll pane
-        jTable = new JTable(data,columns);
+        jTable = new JTable(data, columns);
 
         /*********todo modif jtable***/
         sp = new JScrollPane(jTable);
         sp2 = new JScrollPane(jTextrdf);
-        sp.setPreferredSize(new Dimension(500,400));
-        sp2.setPreferredSize(new Dimension(500,400));
+        sp.setPreferredSize(new Dimension(500, 400));
+        sp2.setPreferredSize(new Dimension(500, 400));
         sp.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         sp2.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-        sp.setPreferredSize(new Dimension(400,280));
-        sp2.setPreferredSize(new Dimension(400,280));
+        sp.setPreferredSize(new Dimension(400, 280));
+        sp2.setPreferredSize(new Dimension(400, 280));
 
 
         panneau2.add(sp);
@@ -90,14 +90,15 @@ public class Fenetre extends JFrame {
 
 
 
-        onglets.addTab("ajouter un contact",panneau1);
-        onglets.addTab("liste des contacts",panneau2);
+        onglets.addTab("ajouter un contact", panneau1);
+        onglets.addTab("liste des contacts", panneau2);
+        onglets.addTab("requetes SPARQL", panneau3);
 
 
         panneau.add(onglets);
         add(panneau);
         //champs nom
-        JLabel lblName = new JLabel("Nom");
+        lblName = new JLabel("Nom");
         lblName.setBounds(200, 31, 60, 14);
         panneau1.add(lblName);
 
@@ -107,26 +108,42 @@ public class Fenetre extends JFrame {
         textField.setColumns(10);
 
         //champs prénom
-        JLabel lbPrenom= new JLabel("Prénom");
+        lbPrenom = new JLabel("Prénom");
         panneau1.add(lbPrenom);
 
         textField_1 = new JTextField();
         panneau1.add(textField_1);
         textField_1.setColumns(10);
 
-        JButton btnClear = new JButton("Clear");
+        btnClear = new JButton("Clear");
         panneau1.add(btnClear);
 
-        JButton btnSubmit = new JButton("valider");
+        btnSubmit = new JButton("valider");
 
         btnSubmit.setBackground(Color.BLUE);
         btnSubmit.setForeground(Color.BLUE);
         panneau1.add(btnSubmit);
 
+        //panneau sparsql
+        lblsparsql = new JLabel("saisir une requete SPARQL");
+        lblsparsql.setBounds(200, 31, 60, 14);
+
+        jtextsparql = new JTextArea();
+        jtextsparql.setPreferredSize(new Dimension(400, 100));
+        jresultsparql = new JTextArea();
+        jresultsparql.setPreferredSize(new Dimension(400, 100));
+
+        btnSparql = new JButton("Exécuter");
+
+        panneau3.add(lblsparsql);
+        panneau3.add(jtextsparql);
+        panneau3.add(jresultsparql);
+        panneau3.add(btnSparql);
+
+
         //charge les données
         readRdfFile();
         loadRdf();
-//        readRdf();
 
         btnClear.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -135,36 +152,42 @@ public class Fenetre extends JFrame {
             }
         });
 
+        btnSparql.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                requeteSparql(jtextsparql.getText());
+            }
+        });
+
         btnSubmit.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
+                launch = 1;
                 jTextArea.setText("");
                 //recupere les saisies
-                Vcard vcard = new Vcard(textField.getText(),textField_1.getText());
+                Vcard vcard = new Vcard(textField.getText(), textField_1.getText());
                 addVcard(vcard, model);
 
                 //TODO parcours de tout les fichier
                 //ajout de tout les fichiers dans le model
                 readRdfFile();
                 loadRdf();
-//                readRdf();
             }
         });
-
     }
 
     /**
      * ajoute une vcard dans le un model
      * @param vcard
      */
-    public void addVcard(Vcard vcard, Model lemodel){
+    public void addVcard(Vcard vcard, Model lemodel) {
 
         //créer la ressource et ajouter des propriétés en cascade
-        lemodel =  ModelFactory.createDefaultModel();
-        lemodel.createResource("http://universite/personne/"+vcard.getNom()+vcard.getprenom())
+        lemodel = ModelFactory.createDefaultModel();
+        lemodel.createResource("http://universite/personne/" + vcard.getNom() + vcard.getprenom())
                 .addProperty(VCARD.FN, vcard.getfullName())
                 .addProperty(VCARD.N,
                         lemodel.createResource()
-                                .addProperty(VCARD.Given,vcard.getprenom())
+                                .addProperty(VCARD.Given, vcard.getprenom())
                                 .addProperty(VCARD.Family, vcard.getNom()));
         saveData(lemodel, vcard.getfullName());
 
@@ -173,12 +196,12 @@ public class Fenetre extends JFrame {
     /**
      * créer le fichier qui contient tout les ressources dans un répertoire dédié
      */
-    public void saveData(Model unmodel, String filename){
+    public void saveData(Model unmodel, String filename) {
         //sauvegarde du modele dans un fichier
-        String dir = System.getProperty("user.dir")+"/vcard/"+filename;
+        String dir = System.getProperty("user.dir") + "/vcard/" + filename;
         File file = new File(dir);
         try {
-            unmodel.write(new FileOutputStream(file),"RDF/XML-ABBREV");
+            unmodel.write(new FileOutputStream(file), "RDF/XML-ABBREV");
         } catch (FileNotFoundException ex) {
             ex.printStackTrace();
         }
@@ -188,23 +211,22 @@ public class Fenetre extends JFrame {
      * lit tous les fichiers rdf du repétoire et l'ajout dans le model
      */
     public void readRdfFile() {
-        File dir = new File(System.getProperty("user.dir")+"/vcard/");
+        File dir = new File(System.getProperty("user.dir") + "/vcard/");
         File[] liste = dir.listFiles();
-        for (File item : liste) {
+        for (File item: liste) {
             if (item.isFile()) {
 
                 System.out.format("Nom du fichier: %s%n", item.getName());
-                InputStream in = null ;
-                if(!(item.getName().equals(".DS_Store"))){
-                    try {
-                        in = new FileInputStream(item);
+                InputStream in = null;
+                if (!(item.getName().equals(".DS_Store"))) {
+                    try { in = new FileInputStream(item);
                         // lire le fichier RDF/XML
-                        model.read(in, null);
+                        model.read( in , null);
 
                     } catch (FileNotFoundException ex) {
                         ex.printStackTrace();
                     }
-                    if (in == null) {
+                    if ( in == null) {
                         throw new IllegalArgumentException(
                                 "Fichier: " + item + " non trouvé");
                     }
@@ -218,7 +240,7 @@ public class Fenetre extends JFrame {
     /**
      * affichage des données dans un jtextArea
      */
-    public void loadRdf(){
+    public void loadRdf() {
         //afficher toutes les Vcards
         ResIterator iter = model.listResourcesWithProperty(VCARD.FN);
         ResIterator iter1 = model.listResourcesWithProperty(VCARD.Given);
@@ -236,23 +258,28 @@ public class Fenetre extends JFrame {
                 String uri = resource.getURI();
                 //todo les espaces font crash l'appli
                 //vérifie l'élément n'est pas deja dans la liste
-                if(!leseleves.contains(valeur)){
+                if (!leseleves.contains(valeur)) {
                     //alimente le tableau
                     leseleves.add(valeur);
                     data[i][0] = iter2.nextResource().getRequiredProperty(VCARD.Family).getString();
                     data[i][1] = iter1.nextResource().getRequiredProperty(VCARD.Given).getString();
                     data[i][2] = uri;
+
+                    if (launch != 0) {
+                        System.out.println("click");
+                        jTable.setValueAt(iter2.nextResource().getRequiredProperty(VCARD.Family).getString(), i, 0);
+                        jTable.setValueAt(iter1.nextResource().getRequiredProperty(VCARD.Given).getString(), i, 1);
+                        jTable.setValueAt(uri, i, 2);
+
+                        jTable.repaint();
+                    }
+
                     i++;
                 }
             }
         } else {
             System.out.println("No vcards were found in the database");
         }
-
-        //ajout dans le textarea
-//        for( String str : leseleves){
-//            jTextArea.append(str+"\n");
-//        }
 
         // affiche le modèle comme RDF/XML
         String syntax = "RDF/XML-ABBREV";
@@ -261,43 +288,27 @@ public class Fenetre extends JFrame {
         String result = out.toString();
         System.out.println(result);
         jTextrdf.setText(result);
+        //TODO UPDATE JTABLE et textarea rdf
 
     }
 
+    public void requeteSparql(String req) {
 
-//        public void readRdf(){
-//        // liste des déclarations dans le modèle
-//        StmtIterator iter = this.model.listStatements();
-//
-//        // affiche l'objet, le prédicat et le sujet de chaque déclaration
-//        while (iter.hasNext()) {
-//            Statement stmt      = iter.nextStatement();  // obtenir la prochaine déclaration
-//            Resource  subject   = stmt.getSubject();     // obtenir le sujet
-//            Property  predicate = stmt.getPredicate();   // obtenir le prédicat
-//            RDFNode   object    = stmt.getObject();      // obtenir l'objet
-//
-//            System.out.print(subject.toString());
-//            System.out.print(" " + predicate.toString() + " ");
-//            //vérifie l'élément n'est pas deja dans la liste
-//            if(!leseleves.contains(subject.toString())){
-//                leseleves.add(subject.toString());
-//            }
-//            if(!leseleves.contains(predicate.toString())){
-//                leseleves.add(predicate.toString());
-//            }
-//            if(!leseleves.contains(object.toString())){
-//                leseleves.add(object.toString());
-//            }
-//            if (object instanceof Resource) {
-//                System.out.print(object.toString());
-//            } else {
-//                // l'objet est un littéral
-//                System.out.print(" \"" + object.toString() + "\"");
-//            }
-//            //ajout dans le textarea
-//            for( String str : leseleves){
-//                jTextrdf.append(str+"\n");
-//            }
-//        }
-//    }
+        Query query = QueryFactory.create(req);
+        QueryExecution qe = QueryExecutionFactory.create(query, this.model);
+        ResultSet rs = qe.execSelect();
+
+
+        System.out.println("******************************");
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PrintStream ps = new PrintStream(baos);
+        ResultSetFormatter.out(baos, rs, query);
+        String s = null;
+        try {
+            s = new String(baos.toByteArray(), "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        jresultsparql.setText(s);
+    }
 }
