@@ -43,8 +43,13 @@ public class Fenetre extends JFrame {
         super("tp1-jena");
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         //centrer la jframe
-        Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
-        this.setLocation(dim.width / 2 - this.getWidth() / 2, dim.height / 2 - this.getHeight() / 2);
+        //récuperer la taille de l'écran
+        Dimension tailleEcran = Toolkit.getDefaultToolkit().getScreenSize();
+        int height = tailleEcran.height;
+        int width = tailleEcran.width;
+        //taille est un demi la longueur et l'hauteur
+        setSize(width/2, height/2);
+        setLocationRelativeTo(null);
         // créer un modèle vide
         this.model = ModelFactory.createDefaultModel();
         initialize();
