@@ -4,11 +4,13 @@ import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.io.*;
 import java.util.ArrayList;
+
 import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.vocabulary.VCARD;
 
 public class Fenetre extends JFrame {
+
 
     private JPanel panneau, panneau1, panneau2, panneau3;
     private JTabbedPane onglets;
@@ -60,7 +62,7 @@ public class Fenetre extends JFrame {
 
         //panneau pour les onglets
         panneau1 = new JPanel();
-        panneau1.setPreferredSize(new Dimension(500, 300));
+        panneau1.setPreferredSize(new Dimension(500, 400));
         panneau2 = new JPanel();
         panneau3 = new JPanel();
 
@@ -74,7 +76,6 @@ public class Fenetre extends JFrame {
         //scroll pane
         jTable = new JTable(data, columns);
 
-        /*********todo modif jtable***/
         sp = new JScrollPane(jTable);
         sp2 = new JScrollPane(jTextrdf);
         sp.setPreferredSize(new Dimension(500, 400));
@@ -99,42 +100,51 @@ public class Fenetre extends JFrame {
         add(panneau);
         //champs nom
         lblName = new JLabel("Nom");
-        lblName.setBounds(200, 31, 60, 14);
+        lblName.setBounds(250, 40, 60, 14);
         panneau1.add(lblName);
 
         textField = new JTextField();
-        textField.setBounds(270, 28, 200, 40);
+        textField.setBounds(350, 28, 200, 40);
         panneau1.add(textField);
         textField.setColumns(10);
 
         //champs prénom
         lbPrenom = new JLabel("Prénom");
+        lbPrenom.setBounds(250, 110, 60, 14);
         panneau1.add(lbPrenom);
+        panneau1.setLayout(null);
 
         textField_1 = new JTextField();
         panneau1.add(textField_1);
         textField_1.setColumns(10);
+        textField_1.setBounds(350, 100, 200, 40);
 
         btnClear = new JButton("Clear");
+        btnClear.setBounds(300,200,100,50);
         panneau1.add(btnClear);
 
         btnSubmit = new JButton("valider");
 
         btnSubmit.setBackground(Color.BLUE);
         btnSubmit.setForeground(Color.BLUE);
+        btnSubmit.setBounds(500,200,100,50);
         panneau1.add(btnSubmit);
 
         //panneau sparsql
         lblsparsql = new JLabel("saisir une requete SPARQL");
-        lblsparsql.setBounds(200, 31, 60, 14);
+        lblsparsql.setBounds(300, 10, 200, 40);
 
         jtextsparql = new JTextArea();
-        jtextsparql.setPreferredSize(new Dimension(400, 100));
+//        jtextsparql.setPreferredSize(new Dimension(400, 100));
+        jtextsparql.setBounds(190, 50, 450, 100);
         jresultsparql = new JTextArea();
-        jresultsparql.setPreferredSize(new Dimension(400, 100));
+        jresultsparql.setBounds(180, 170, 470, 170);
+//        jresultsparql.setPreferredSize(new Dimension(400, 100));
 
         btnSparql = new JButton("Exécuter");
+        btnSparql.setBounds(350, 350, 100,50);
 
+        panneau3.setLayout(null);
         panneau3.add(lblsparsql);
         panneau3.add(jtextsparql);
         panneau3.add(jresultsparql);
@@ -171,6 +181,8 @@ public class Fenetre extends JFrame {
                 //ajout de tout les fichiers dans le model
                 readRdfFile();
                 loadRdf();
+
+                JOptionPane.showMessageDialog(null, "Vcard crée", "tp jena", JOptionPane.PLAIN_MESSAGE);
             }
         });
     }
@@ -198,7 +210,7 @@ public class Fenetre extends JFrame {
      */
     public void saveData(Model unmodel, String filename) {
         //sauvegarde du modele dans un fichier
-        String dir = System.getProperty("user.dir") + "/vcard/" + filename;
+        String dir = "/Users/etienne/Desktop/vcard/" + filename;
         File file = new File(dir);
         try {
             unmodel.write(new FileOutputStream(file), "RDF/XML-ABBREV");
@@ -211,7 +223,12 @@ public class Fenetre extends JFrame {
      * lit tous les fichiers rdf du repétoire et l'ajout dans le model
      */
     public void readRdfFile() {
-        File dir = new File(System.getProperty("user.dir") + "/vcard/");
+        File dir = new File("/Users/etienne/Desktop/vcard/");
+        if(!dir.exists()){
+            System.out.println("création du répertoire");
+            dir.mkdir();
+        }
+
         File[] liste = dir.listFiles();
         for (File item: liste) {
             if (item.isFile()) {
@@ -264,16 +281,6 @@ public class Fenetre extends JFrame {
                     data[i][0] = iter2.nextResource().getRequiredProperty(VCARD.Family).getString();
                     data[i][1] = iter1.nextResource().getRequiredProperty(VCARD.Given).getString();
                     data[i][2] = uri;
-
-                    if (launch != 0) {
-                        System.out.println("click");
-                        jTable.setValueAt(iter2.nextResource().getRequiredProperty(VCARD.Family).getString(), i, 0);
-                        jTable.setValueAt(iter1.nextResource().getRequiredProperty(VCARD.Given).getString(), i, 1);
-                        jTable.setValueAt(uri, i, 2);
-
-                        jTable.repaint();
-                    }
-
                     i++;
                 }
             }
