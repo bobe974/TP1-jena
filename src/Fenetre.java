@@ -1,4 +1,5 @@
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
@@ -10,7 +11,6 @@ import org.apache.jena.rdf.model.*;
 import org.apache.jena.vocabulary.VCARD;
 
 public class Fenetre extends JFrame {
-
 
     private JPanel panneau, panneau1, panneau2, panneau3;
     private JTabbedPane onglets;
@@ -186,8 +186,10 @@ public class Fenetre extends JFrame {
                 //ajout de tout les fichiers dans le model
                 readRdfFile();
                 loadRdf();
-
+                jTable.setModel(new DefaultTableModel(data,columns));
                 JOptionPane.showMessageDialog(null, "Vcard crée", "tp jena", JOptionPane.PLAIN_MESSAGE);
+                textField_1.setText("");
+                textField.setText("");
             }
         });
     }
@@ -215,7 +217,9 @@ public class Fenetre extends JFrame {
      */
     public void saveData(Model unmodel, String filename) {
         //sauvegarde du modele dans un fichier
-        String dir = "/Users/etienne/Desktop/vcard/" + filename;
+        String dir = System.getProperty("user.dir")+"/vcard/"+filename;
+        //"/Users/etienne/Desktop/vcard/" + filename;
+
         File file = new File(dir);
         try {
             unmodel.write(new FileOutputStream(file), "RDF/XML-ABBREV");
@@ -228,7 +232,8 @@ public class Fenetre extends JFrame {
      * lit tous les fichiers rdf du repétoire et l'ajout dans le model
      */
     public void readRdfFile() {
-        File dir = new File("/Users/etienne/Desktop/vcard/");
+        File dir = new File(System.getProperty("user.dir")+"/vcard/");
+        // new File("/Users/etienne/Desktop/vcard/");
         if(!dir.exists()){
             System.out.println("création du répertoire");
             dir.mkdir();
