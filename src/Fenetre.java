@@ -140,6 +140,8 @@ public class Fenetre extends JFrame {
         lblsparsql.setBounds(300, 10, 200, 40);
 
         jtextsparql = new JTextArea();
+        jtextsparql.setText("SELECT ?x ?fname\n" +
+                "WHERE {?x  <http://www.w3.org/2001/vcard-rdf/3.0#FN>  ?fname}");
 //        jtextsparql.setPreferredSize(new Dimension(400, 100));
         jtextsparql.setBounds(190, 50, 450, 100);
         jresultsparql = new JTextArea();
